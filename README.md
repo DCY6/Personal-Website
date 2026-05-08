@@ -1,16 +1,30 @@
-# React + Vite
+# berber 的个人网页
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个手绘风格的个人主页，用于展示个人简介、作品集、联系方式和兴趣爱好。
 
-Currently, two official plugins are available:
+## 项目地址
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+[https://berber.qzz.io/](https://berber.qzz.io/)
 
-## React Compiler
+## 页面预览
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+![berber 的个人网页预览](docs/preview.png)
 
-## Expanding the ESLint configuration
+## 本地运行
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```powershell
+npm install
+npm run dev
+```
+
+本地访问地址：
+
+```text
+http://127.0.0.1:5174/
+```
+
+## 构建
+
+```powershell
+npm run build
+```
