@@ -1,0 +1,185 @@
+berber 的个人网页部署说明
+
+一、这个网站是怎么部署上线的
+
+这个个人网页是一个 React + Vite 写的纯前端静态网站。它没有后端服务器，也没有数据库，最终上线时只需要把构建出来的 HTML、CSS、JavaScript、图片等静态文件托管到静态网站平台。
+
+本地开发时的流程是：
+
+1. 在项目目录运行 npm run dev
+2. Vite 在本地启动开发服务器
+3. 浏览器访问 http://127.0.0.1:5174/
+4. 修改 src 目录里的代码后，页面可以实时刷新预览
+
+正式部署时的流程是：
+
+1. 在本地修改网页代码
+2. 使用 git add、git commit、git push 把代码推送到 GitHub 仓库
+3. EdgeOne Pages 监听到 GitHub 仓库有新的提交
+4. EdgeOne Pages 自动拉取最新代码
+5. EdgeOne Pages 执行 npm install 安装依赖
+6. EdgeOne Pages 执行 npm run build 构建项目
+7. Vite 生成 dist 目录
+8. EdgeOne Pages 把 dist 目录里的静态文件发布到线上
+9. 用户访问 https://berber.qzz.io/ 时，就能看到最新网页
+
+二、从浏览器输入网址到显示页面，中间发生了什么
+
+当用户在浏览器输入：
+
+https://berber.qzz.io/
+
+大致会经过这些步骤：
+
+1. 浏览器先检查本地缓存，看之前有没有记住 berber.qzz.io 对应的 DNS 结果。
+
+2. 如果本地没有缓存，浏览器会向 DNS 解析系统查询 berber.qzz.io 应该访问哪里。
+
+3. 因为 berber.qzz.io 这个域名的名称服务器已经交给 Cloudflare 管理，所以 DNS 查询会来到 Cloudflare。
+
+4. Cloudflare 查到这个域名配置了一条 CNAME 记录，指向 EdgeOne Pages 给出的目标地址。
+
+5. 浏览器根据 DNS 返回结果，找到 EdgeOne Pages 对应的服务节点。
+
+6. 浏览器和 EdgeOne 建立 HTTPS 连接。HTTPS 证书由 EdgeOne / 腾讯云负责申请和部署，用来保证访问时浏览器显示安全锁。
+
+7. EdgeOne 收到请求后，找到之前构建并发布好的静态文件，比如 index.html、CSS、JavaScript、图片等。
+
+8. EdgeOne 把这些文件返回给浏览器。
+
+9. 浏览器先加载 index.html，再加载里面引用的 CSS、JavaScript 和图片。
+
+10. React 在浏览器中运行，把页面渲染出来，用户就看到了 berber 的个人网页界面。
+
+简单说就是：
+
+用户浏览器 -> 查询 DNS -> Cloudflare 返回 EdgeOne 地址 -> 浏览器访问 EdgeOne -> EdgeOne 返回网页文件 -> 浏览器渲染页面
+
+三、DigitalPlat 在这个网站里扮演什么作用
+
+DigitalPlat 是 berber.qzz.io 这个免费域名的注册和管理平台。
+
+它主要负责：
+
+1. 提供 berber.qzz.io 这个免费域名
+2. 允许修改这个域名的名称服务器，也就是 Nameserver / NS
+3. 把域名的 DNS 管理权交给其他 DNS 服务商
+
+在这个项目中，DigitalPlat 不负责真正的网站托管，也不负责返回网页内容。
+
+因为 DigitalPlat 没有可用的 DNS 解析记录管理功能，所以不能直接在里面添加 A 记录、CNAME 记录、TXT 记录等。它主要做的事情是把 berber.qzz.io 的 Nameserver 改成 Cloudflare 提供的 Nameserver。
+
+也就是说：
+
+DigitalPlat 负责“这个域名是谁的，以及 DNS 管理权交给谁”。
+
+四、Cloudflare 在这个网站里扮演什么作用
+
+Cloudflare 在这个项目里主要负责 DNS 解析。
+
+DNS 解析可以理解为“把域名翻译成网站实际所在位置”的过程。用户输入 berber.qzz.io 时，浏览器并不知道网页文件在哪里，需要先问 DNS。
+
+之前把 Cloudflare 用来做 DNS 解析，意思是：
+
+1. 在 Cloudflare 添加 berber.qzz.io 这个站点
+2. Cloudflare 给出两个 Nameserver
+3. 到 DigitalPlat 里把 berber.qzz.io 的 Nameserver 改成 Cloudflare 的 Nameserver
+4. 从此 berber.qzz.io 的 DNS 记录就由 Cloudflare 管理
+5. 在 Cloudflare 里添加 TXT 记录，用于完成 EdgeOne 的域名归属验证
+6. 在 Cloudflare 里添加 CNAME 记录，把 berber.qzz.io 指向 EdgeOne Pages
+
+这里的“用 Cloudflare 去 DNS 解析”不是把网站部署到 Cloudflare Pages，也不是让 Cloudflare 存放网页文件，而是让 Cloudflare 负责回答：
+
+berber.qzz.io 应该指向哪里？
+
+当前推荐的状态是 Cloudflare 的 CNAME 记录使用“仅 DNS”，也就是灰色云朵。
+
+灰色云朵的含义是：
+
+Cloudflare 只负责 DNS 查询，不代理网站流量。
+
+橙色云朵的含义是：
+
+Cloudflare 不仅负责 DNS，还会代理用户访问流量。
+
+这个项目里使用灰色云朵更合适，因为网页实际托管在 EdgeOne Pages 上，HTTPS 证书和静态文件访问都交给 EdgeOne 处理，减少中间代理带来的证书、缓存和验证问题。
+
+五、腾讯云 EdgeOne Pages 在这个网站里扮演什么作用
+
+EdgeOne Pages 是真正托管网页的地方。
+
+它主要负责：
+
+1. 连接 GitHub 仓库
+2. 在代码更新后自动拉取代码
+3. 自动运行 npm install
+4. 自动运行 npm run build
+5. 发布 dist 目录里的静态网页文件
+6. 提供线上访问地址
+7. 为自定义域名 berber.qzz.io 配置 HTTPS 证书
+8. 当用户访问网站时，把网页文件返回给浏览器
+
+所以，EdgeOne Pages 是这个网站的“实际服务器/静态托管平台”。
+
+虽然这个网站没有传统服务器，但 EdgeOne Pages 会在它的边缘节点上保存构建好的静态文件，并在用户访问时把这些文件发给用户。
+
+六、为什么要做域名验证
+
+EdgeOne 在绑定 berber.qzz.io 之前，需要确认这个域名确实由你控制。
+
+验证的方式有两种：
+
+1. DNS TXT 验证
+2. 文件验证
+
+之前主要使用的是 DNS TXT 验证。
+
+DNS TXT 验证的意思是：
+
+EdgeOne 给你一段指定文本，比如 edgeonereclaim 和 reclaim-xxx。
+你需要在域名 DNS 服务商那里添加一条 TXT 记录。
+如果 EdgeOne 能查到这条 TXT 记录，就说明你有权限管理这个域名。
+
+本项目中，TXT 记录添加在 Cloudflare 里，因为 berber.qzz.io 的 DNS 已经由 Cloudflare 管理。
+
+文件验证的意思是：
+
+EdgeOne 给你一个指定文件，要求你把它放在网站的指定路径下。
+如果 EdgeOne 能通过 berber.qzz.io 访问到这个文件，也说明你有权限管理这个域名。
+
+但当时因为 berber.qzz.io 还没有正常指向网站，所以文件验证不方便使用，最后选择了通过 Cloudflare 添加 DNS TXT 记录完成验证。
+
+七、后续更新网页要怎么做
+
+以后修改网页后，不需要重新配置域名，也不需要重新申请 HTTPS 证书。
+
+只需要在本地项目目录执行：
+
+git add .
+git commit -m "update website"
+git push
+
+推送到 GitHub 后，EdgeOne Pages 会自动重新部署。
+
+部署完成后，访问：
+
+https://berber.qzz.io/
+
+就能看到更新后的网页。
+
+八、整体关系总结
+
+DigitalPlat：
+提供免费域名 berber.qzz.io，并负责把 DNS 管理权交给 Cloudflare。
+
+Cloudflare：
+负责 DNS 解析，保存 TXT 验证记录和 CNAME 指向记录，让 berber.qzz.io 指向 EdgeOne Pages。
+
+腾讯云 EdgeOne Pages：
+负责从 GitHub 拉取代码、构建项目、托管 dist 静态文件、配置 HTTPS 证书，并把网页内容返回给访问者。
+
+GitHub：
+负责保存网站源码。每次推送代码后，EdgeOne Pages 会自动读取 GitHub 仓库并重新部署。
+
+浏览器：
+负责访问域名、下载网页文件，并运行 React 代码显示最终界面。
